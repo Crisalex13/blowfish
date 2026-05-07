@@ -13,7 +13,7 @@ import base64
 import hashlib
 import struct
 from getpass import getpass
-from datetime import datetime
+from datetime import datetime, UTC
  
 try:
     from Crypto.Cipher import Blowfish
@@ -265,7 +265,7 @@ def descifrar_documento(ruta_cifrada: str, ruta_salida: str, password: str) -> N
 # ──────────────────────────────────────────────
  
 def cifrar_credenciales(datos: dict, password: str) -> str:
-    datos["_timestamp"] = datetime.utcnow().isoformat() + "Z"
+    datos["_timestamp"] = datetime.now(UTC).isoformat()
     json_bytes = json.dumps(datos, ensure_ascii=False).encode("utf-8")
     paquete = cifrar(json_bytes, password)
     return base64.b64encode(paquete).decode("ascii")
@@ -305,7 +305,6 @@ def menu_principal():
     print("  [2] Imagen")
     print("  [3] Documento (PDF, Word, Excel, PowerPoint...)")
     print("  [4] Contraseña / Ubicación GPS")
-    print("  [0] Salir")
     return input("\n  Elige opción: ").strip()
  
 # ──────────────────────────────────────────────
@@ -326,7 +325,7 @@ def flujo_texto():
             print("  " + resultado[i:i+64])
         guardar = input("\n  ¿Guardar en archivo? (s/n): ").strip().lower()
         if guardar == "s":
-            ruta = input("  Nombre del archivo [cifrado.txt]: ").strip() or "cifrado.txt"
+            ruta = input("  Nombre del archivo [cifrado.txt] (sin .txt): ").strip() or "cifrado.txt"
             with open(ruta, "w") as f:
                 f.write(resultado)
             print(f"  Guardado en {ruta}")
@@ -387,7 +386,7 @@ def flujo_imagen():
     elif accion == "D":
         password = pedir_password_existente("  Contraseña maestra")
         entrada = input("  Ruta del archivo cifrado      (ej: foto.bf):     ").strip()
-        salida  = input("  Ruta de salida sin extensión  (ej: foto_dec):    ").strip()
+        salida  = input("  Ruta de salida sin extensión  (ej: foto):    ").strip()
         if not salida:
             salida = os.path.splitext(entrada)[0] + "_descifrado"
         try:
@@ -416,7 +415,7 @@ def flujo_documento():
         # Sugerir nombre de salida automáticamente
         nombre_base = os.path.splitext(entrada)[0]
         salida_sugerida = nombre_base + ".bfdoc"
-        salida = input(f"  Ruta del archivo cifrado     [{salida_sugerida}]: ").strip()
+        salida = input(f"  Ruta del archivo cifrado  (ej: cifrado):   [{salida_sugerida}]: ").strip()
         if not salida:
             salida = salida_sugerida
  
@@ -513,8 +512,6 @@ def main():
             flujo_documento()           # ← Se implemento los documentos
         elif opcion == "4":
             flujo_credenciales()        # ← Se implemento los documentoslas credenciales
-            print("\n  Hasta luego. Mantén tus datos seguros.\n")
-            break
         else:
             print("  Opción no válida, intenta de nuevo.")
         print()
